@@ -23,7 +23,7 @@ require_once '/var/www/src/includes/navbar.php';
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Quản lý danh mục</h2>
-        <a href="#" class="btn btn-primary">Thêm danh mục</a>
+        <a href="/categories/create.php" class="btn btn-primary">Thêm danh mục</a>
     </div>
 
     <div class="table-responsive">
@@ -43,8 +43,16 @@ require_once '/var/www/src/includes/navbar.php';
                         <td><?= htmlspecialchars($category['CategoryName']) ?></td>
                         <td><?= htmlspecialchars($category['Description'] ?? '') ?></td>
                         <td>
-                            <a href="#" class="btn btn-sm btn-warning">Sửa</a>
-                            <a href="#" class="btn btn-sm btn-danger">Xóa</a>
+                            <a href="/categories/edit.php?id=<?= $category['CategoryID'] ?>" class="btn btn-sm btn-warning">Sửa</a>
+                            <form
+                                action="/categories/delete.php"
+                                method="post"
+                                class="d-inline"
+                                onsubmit="return confirm('Bạn có chắc muốn xóa danh mục này?');"
+                            >
+                                <input type="hidden" name="id" value="<?= $category['CategoryID'] ?>">
+                                <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                            </form>
                         </td>
                     </tr>
                 <?php endwhile; ?>
