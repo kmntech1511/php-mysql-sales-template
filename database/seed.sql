@@ -28,10 +28,10 @@ INSERT INTO products (ProductCode, ProductName, Description, Unit, Price, StockQ
     ('SP003', 'Chuột không dây C', 'Chuột không dây nhỏ gọn, kết nối ổn định.', 'Chiếc', 450000.00, 50, TRUE, 2, 3);
 
 INSERT INTO product_images (ProductID, ImageFile, AltText, IsPrimary, SortOrder) VALUES
-    (1, 'phone-a-1.jpg', 'Điện thoại Smartphone A - ảnh chính', TRUE, 1),
-    (1, 'phone-a-2.jpg', 'Điện thoại Smartphone A - mặt sau', FALSE, 2),
-    (2, 'laptop-b-1.jpg', 'Laptop B - ảnh chính', TRUE, 1),
-    (3, 'mouse-c-1.jpg', 'Chuột không dây C - ảnh chính', TRUE, 1);
+    (1, 'phone1.png', 'Điện thoại Smartphone A - ảnh chính', TRUE, 1),
+    (1, 'phone2.png', 'Điện thoại Smartphone A - mặt sau', FALSE, 2),
+    (2, 'laptop1.png', 'Laptop B - ảnh chính', TRUE, 1),
+    (3, 'chuot1.jpg', 'Chuột không dây C - ảnh chính', TRUE, 1);
 
 INSERT INTO orders (OrderDate, CustomerID, EmployeeID, ShipperID) VALUES
     ('2026-08-10', 1, 1, 1),

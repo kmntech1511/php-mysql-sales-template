@@ -8,7 +8,7 @@
             <ul class="navbar-nav">
                 <li class="nav-item"><a class="nav-link" href="/">Trang chủ</a></li>
                 <li class="nav-item"><a class="nav-link" href="/categories/">Danh mục</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Sản phẩm</a></li>
+                <li class="nav-item"><a class="nav-link" href="/products/">Sản phẩm</a></li>
                 <li class="nav-item"><a class="nav-link" href="#">Đơn hàng</a></li>
             </ul>
         </div>
