@@ -4,7 +4,7 @@ require_once '/var/www/src/config/database.php';
 
 $productID = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if ($productID <= 0) {
-    header('Location: /products/');
+    header('Location: /admin/products/');
     exit;
 }
 
@@ -15,7 +15,7 @@ $product = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$product) {
-    header('Location: /products/');
+    header('Location: /admin/products/');
     exit;
 }
 
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unlink($filePath);
             }
 
-            header('Location: /products/edit.php?id=' . $productID . '&image_deleted=1');
+            header('Location: /admin/products/edit.php?id=' . $productID . '&image_deleted=1');
             exit;
 
         } catch (Throwable $e) {
@@ -211,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtInsertImage->close();
                 $conn->commit();
 
-                header('Location: /products/edit.php?id=' . $productID . '&images_added=1');
+                header('Location: /admin/products/edit.php?id=' . $productID . '&images_added=1');
                 exit;
 
             } catch (Throwable $e) {
@@ -251,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtSetPrimary->close();
             $conn->commit();
 
-            header('Location: /products/edit.php?id=' . $productID . '&primary_updated=1');
+            header('Location: /admin/products/edit.php?id=' . $productID . '&primary_updated=1');
             exit;
 
         } catch (Throwable $e) {
@@ -280,7 +280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bind_param('ssssdiiiii', $productCode, $productName, $description, $unit, $price, $stockQuantity, $isActive, $supplierID, $categoryID, $productID);
 
             if ($stmt->execute()) {
-                header('Location: /products/');
+                header('Location: /admin/products/');
                 exit;
             }
             $error = 'Không thể cập nhật sản phẩm.';
@@ -301,8 +301,8 @@ $stmtImages->bind_param('i', $productID);
 $stmtImages->execute();
 $productImages = $stmtImages->get_result();
 
-require_once '/var/www/src/includes/header.php';
-require_once '/var/www/src/includes/navbar.php';
+require_once '/var/www/src/includes/admin/header.php';
+require_once '/var/www/src/includes/admin/navbar.php';
 ?>
 
 <div class="container mt-4">
@@ -401,12 +401,12 @@ require_once '/var/www/src/includes/navbar.php';
                             <?php if ((int) $image['IsPrimary'] === 1): ?>
                                 <div class="mt-2">
                                     <span class="badge bg-success">Ảnh chính</span>
-                                    <button type="submit" class="btn btn-outline-danger btn-sm mt-2" name="delete_image" value="<?= $image['ProductImageID'] ?>" formaction="/products/edit.php?id=<?= $productID ?>" formmethod="post" onclick="return confirm('Bạn có chắc muốn xóa ảnh này?');">Xóa ảnh</button>
+                                    <button type="submit" class="btn btn-outline-danger btn-sm mt-2" name="delete_image" value="<?= $image['ProductImageID'] ?>" formaction="/admin/products/edit.php?id=<?= $productID ?>" formmethod="post" onclick="return confirm('Bạn có chắc muốn xóa ảnh này?');">Xóa ảnh</button>
                                 </div>
                             <?php else: ?>
                                 <div class="mt-2">
-                                    <button type="submit" class="btn btn-outline-primary btn-sm mb-1" name="set_primary_image" value="<?= $image['ProductImageID'] ?>" formaction="/products/edit.php?id=<?= $productID ?>" formmethod="post">Đặt làm ảnh chính</button>
-                                    <button type="submit" class="btn btn-outline-danger btn-sm" name="delete_image" value="<?= $image['ProductImageID'] ?>" formaction="/products/edit.php?id=<?= $productID ?>" formmethod="post" onclick="return confirm('Bạn có chắc muốn xóa ảnh này?');">Xóa ảnh</button>
+                                    <button type="submit" class="btn btn-outline-primary btn-sm mb-1" name="set_primary_image" value="<?= $image['ProductImageID'] ?>" formaction="/admin/products/edit.php?id=<?= $productID ?>" formmethod="post">Đặt làm ảnh chính</button>
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" name="delete_image" value="<?= $image['ProductImageID'] ?>" formaction="/admin/products/edit.php?id=<?= $productID ?>" formmethod="post" onclick="return confirm('Bạn có chắc muốn xóa ảnh này?');">Xóa ảnh</button>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -426,11 +426,11 @@ require_once '/var/www/src/includes/navbar.php';
 
         <hr class="my-4">
         <button type="submit" class="btn btn-warning">Cập nhật</button>
-        <a href="/products/" class="btn btn-secondary">Hủy</a>
+        <a href="/admin/products/" class="btn btn-secondary">Hủy</a>
     </form>
 </div>
 
 <?php
-require_once '/var/www/src/includes/footer.php';
+require_once '/var/www/src/includes/admin/footer.php';
 $conn->close();
 ?>

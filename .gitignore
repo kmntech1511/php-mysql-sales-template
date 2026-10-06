@@ -3,3 +3,5 @@
 # Microsoft Word temporary files
 ~$*
 ~WRL*.tmp
+# Runtime product uploads
+public/uploads/products/product-*

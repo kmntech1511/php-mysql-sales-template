@@ -2,7 +2,7 @@
 require_once '/var/www/src/config/database.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /products/');
+    header('Location: /admin/products/');
     exit;
 }
 
@@ -20,7 +20,7 @@ if ($productID > 0) {
             $conn->commit();
             $stmt->close();
             $conn->close();
-            header('Location: /products/');
+            header('Location: /admin/products/');
             exit;
         }
 

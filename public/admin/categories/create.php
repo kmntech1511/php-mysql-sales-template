@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bind_param('ss', $categoryName, $description);
 
         if ($stmt->execute()) {
-            header('Location: /categories/');
+            header('Location: /admin/categories/');
             exit;
         } else {
             $error = 'Không thể thêm danh mục.';
@@ -32,8 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once '/var/www/src/includes/header.php';
-require_once '/var/www/src/includes/navbar.php';
+require_once '/var/www/src/includes/admin/header.php';
+require_once '/var/www/src/includes/admin/navbar.php';
 
 ?>
 
@@ -70,10 +70,10 @@ require_once '/var/www/src/includes/navbar.php';
         </div>
 
         <button type="submit" class="btn btn-primary">Lưu</button>
-        <a href="/categories/" class="btn btn-secondary">Hủy</a>
+        <a href="/admin/categories/" class="btn btn-secondary">Hủy</a>
     </form>
 </div>
 
 <?php
-require_once '/var/www/src/includes/footer.php';
+require_once '/var/www/src/includes/admin/footer.php';
 $conn->close();
