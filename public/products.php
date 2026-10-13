@@ -1,4 +1,5 @@
 <?php
+require_once '/var/www/src/config/session.php';
 require_once '/var/www/src/config/database.php';
 
 // 1. Lấy danh sách danh mục cho bộ lọc
