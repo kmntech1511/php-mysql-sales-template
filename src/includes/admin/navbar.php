@@ -9,9 +9,8 @@
                 <li class="nav-item"><a class="nav-link" href="/">Trang chủ</a></li>
                 <li class="nav-item"><a class="nav-link" href="/admin/categories/">Danh mục</a></li>
                 <li class="nav-item"><a class="nav-link" href="/admin/products/">Sản phẩm</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Đơn hàng</a></li>
-                <li class="nav-item"><a class="nav-link" href="/admin/shippers/">Người giao hàng</a>
-</li>
+                <li class="nav-item"><a class="nav-link" href="/admin/orders/">Đơn hàng</a></li>
+                <li class="nav-item"><a class="nav-link" href="/admin/shippers/">Người giao hàng</a></li>
             </ul>
         </div>
     </div>
