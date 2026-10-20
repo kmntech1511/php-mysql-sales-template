@@ -79,18 +79,71 @@ if (empty($cartItems)) {
     exit;
 }
 
-$errorMessage = '';
+// 8.1. Xác định trạng thái đăng nhập
+$isLoggedIn = isset($_SESSION['customer_id']);
+
+$customerID = null;
 $customerName = '';
+$email = '';
 $phone = '';
 $address = '';
+$errorMessage = '';
 
+// 8.2. Đọc thông tin tài khoản từ database
+if ($isLoggedIn) {
+    $customerID = (int) $_SESSION['customer_id'];
+
+    $sqlCustomerAccount = "
+        SELECT
+            CustomerID,
+            CustomerName,
+            Email,
+            Phone,
+            Address
+        FROM customers
+        WHERE CustomerID = ?
+          AND Email IS NOT NULL
+    ";
+
+    $stmtCustomerAccount = $conn->prepare($sqlCustomerAccount);
+    $stmtCustomerAccount->bind_param('i', $customerID);
+    $stmtCustomerAccount->execute();
+
+    $customerResult = $stmtCustomerAccount->get_result();
+    $customer = $customerResult->fetch_assoc();
+
+    $customerResult->free();
+    $stmtCustomerAccount->close();
+
+    if (!$customer) {
+        unset(
+            $_SESSION['customer_id'],
+            $_SESSION['customer_name']
+        );
+
+        header('Location: /login.php');
+        exit;
+    }
+
+    $customerName = $customer['CustomerName'];
+    $email = $customer['Email'] ?? '';
+    $phone = $customer['Phone'] ?? '';
+    $address = $customer['Address'] ?? '';
+}
+
+// 8.3. Nhận dữ liệu POST theo hai trường hợp
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
-    $customerName = trim($_POST['customer_name'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    $address = trim($_POST['address'] ?? '');
+    if ($isLoggedIn) {
+        $phone = trim($_POST['phone'] ?? '');
+        $address = trim($_POST['address'] ?? '');
+    } else {
+        $customerName = trim($_POST['customer_name'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $address = trim($_POST['address'] ?? '');
+    }
 
-    if ($customerName === '' || $phone === '' || $address === '') {
+    if (($isLoggedIn && ($phone === '' || $address === '')) || (!$isLoggedIn && ($customerName === '' || $phone === '' || $address === ''))) {
         $errorMessage = 'Vui lòng nhập đầy đủ thông tin khách hàng.';
     } else {
         try {
@@ -146,21 +199,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
                     'UnitPrice' => $unitPrice
                 ];
             }
-
             $stmtProduct->close();
+            // 8.4. Thay bước luôn tạo customer mới
+            if ($isLoggedIn) {
+                $sqlAccount = "
+                    SELECT CustomerID
+                    FROM customers
+                    WHERE CustomerID = ?
+                      AND Email IS NOT NULL
+                    FOR UPDATE
+                ";
 
-            $sqlCustomer = "
-                INSERT INTO customers
-                    (CustomerName, Address, Phone)
-                VALUES (?, ?, ?)
-            ";
+                $stmtAccount = $conn->prepare($sqlAccount);
+                $stmtAccount->bind_param('i', $customerID);
+                $stmtAccount->execute();
 
-            $stmtCustomer = $conn->prepare($sqlCustomer);
-            $stmtCustomer->bind_param('sss', $customerName, $address, $phone);
-            $stmtCustomer->execute();
+                $accountResult = $stmtAccount->get_result();
+                $account = $accountResult->fetch_assoc();
 
-            $customerID = $conn->insert_id;
-            $stmtCustomer->close();
+                $accountResult->free();
+                $stmtAccount->close();
+
+                if (!$account) {
+                    throw new Exception('Tài khoản khách hàng không còn hợp lệ.');
+                }
+
+                $sqlUpdateCustomer = "
+                    UPDATE customers
+                    SET
+                        Phone = ?,
+                        Address = ?
+                    WHERE CustomerID = ?
+                ";
+
+                $stmtUpdateCustomer = $conn->prepare($sqlUpdateCustomer);
+                $stmtUpdateCustomer->bind_param('ssi', $phone, $address, $customerID);
+                $stmtUpdateCustomer->execute();
+                $stmtUpdateCustomer->close();
+
+            } else {
+                $sqlCustomer = "
+                    INSERT INTO customers (
+                        CustomerName,
+                        Address,
+                        Phone
+                    )
+                    VALUES (?, ?, ?)
+                ";
+
+                $stmtCustomer = $conn->prepare($sqlCustomer);
+                $stmtCustomer->bind_param('sss', $customerName, $address, $phone);
+                $stmtCustomer->execute();
+
+                $customerID = $conn->insert_id;
+                $stmtCustomer->close();
+            }
 
             $status = 'Pending';
 
@@ -241,17 +334,41 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                 <div class="card-body">
                     <h2 class="h5 mb-3">Thông tin khách hàng</h2>
                     <form method="post">
-                        <div class="mb-3">
-                            <label for="customer_name" class="form-label">Họ tên</label>
-                            <input
-                                type="text"
-                                class="form-control"
-                                id="customer_name"
-                                name="customer_name"
-                                value="<?= htmlspecialchars($customerName) ?>"
-                                required
-                            >
-                        </div>
+                        <!-- 8.5. Điều chỉnh form Checkout -->
+                        <?php if ($isLoggedIn): ?>
+                            <div class="mb-3">
+                                <label class="form-label">Họ và tên</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    value="<?= htmlspecialchars($customerName) ?>"
+                                    readonly
+                                >
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input
+                                    type="email"
+                                    class="form-control"
+                                    value="<?= htmlspecialchars($email) ?>"
+                                    readonly
+                                >
+                            </div>
+                        <?php else: ?>
+                            <div class="mb-3">
+                                <label for="customer_name" class="form-label">Họ tên</label>
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    id="customer_name"
+                                    name="customer_name"
+                                    value="<?= htmlspecialchars($customerName) ?>"
+                                    required
+                                >
+                            </div>
+                        <?php endif; ?>
+
                         <div class="mb-3">
                             <label for="phone" class="form-label">Số điện thoại</label>
                             <input
@@ -263,6 +380,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                                 required
                             >
                         </div>
+
                         <div class="mb-3">
                             <label for="address" class="form-label">Địa chỉ</label>
                             <textarea
@@ -273,6 +391,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                                 required
                             ><?= htmlspecialchars($address) ?></textarea>
                         </div>
+
                         <button type="submit" name="place_order" class="btn btn-success">
                             Xác nhận đặt hàng
                         </button>
