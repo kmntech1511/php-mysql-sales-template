@@ -259,8 +259,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['place_order'])) {
 
             $sqlOrder = "
                 INSERT INTO orders
-                    (TotalAmount, Status, CustomerID)
-                VALUES (?, ?, ?)
+                    (OrderDate, TotalAmount, Status, CustomerID)
+                VALUES (CURRENT_TIMESTAMP, ?, ?, ?)
             ";
 
             $stmtOrder = $conn->prepare($sqlOrder);
