@@ -2,7 +2,7 @@
 
 require_once '/var/www/src/config/session.php';
 
-$pageTitle = 'Sản phẩm từ REST API';
+$pageTitle = 'Khám phá sản phẩm';
 
 require_once '/var/www/src/includes/frontend/header.php';
 require_once '/var/www/src/includes/frontend/navbar.php';
@@ -12,7 +12,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
 <div class="container py-4">
 
     <h1 class="h3 mb-4">
-        Sản phẩm từ REST API
+        Khám phá sản phẩm
     </h1>
 
     <form id="filter-form" class="row g-3 mb-4">
@@ -44,6 +44,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
 
         <div class="col-md-2 d-flex align-items-end">
             <button type="submit" class="btn btn-primary w-100">
+                <i class="fa-solid fa-magnifying-glass me-2" aria-hidden="true"></i>
                 Tìm kiếm
             </button>
         </div>
@@ -178,7 +179,7 @@ function createProductCard(product) {
                         href="/product-detail.php?id=${product.id}"
                         class="btn btn-primary"
                     >
-                        Xem chi tiết
+                        <i class="fa-regular fa-eye me-2" aria-hidden="true"></i>Xem chi tiết
                     </a>
 
                 </div>

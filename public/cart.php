@@ -162,6 +162,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
             href="/products.php"
             class="btn btn-primary"
         >
+            <i class="fa-solid fa-arrow-left me-2" aria-hidden="true"></i>
             Tiếp tục mua hàng
         </a>
 
@@ -302,6 +303,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                                         class="btn btn-sm btn-outline-danger"
                                         formnovalidate
                                     >
+                                        <i class="fa-regular fa-trash-can me-1" aria-hidden="true"></i>
                                         Xóa
                                     </button>
 
@@ -354,6 +356,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                     name="update_cart"
                     class="btn btn-primary"
                 >
+                    <i class="fa-solid fa-rotate me-2" aria-hidden="true"></i>
                     Cập nhật giỏ hàng
                 </button>
 
@@ -371,13 +374,15 @@ require_once '/var/www/src/includes/frontend/navbar.php';
         href="/products.php"
         class="btn btn-outline-secondary"
     >
+        <i class="fa-solid fa-arrow-left me-2" aria-hidden="true"></i>
         Tiếp tục mua hàng
     </a>
 
     <a
         href="/checkout.php"
-        class="btn btn-success"
+        class="btn btn-primary"
     >
+        <i class="fa-solid fa-lock me-2" aria-hidden="true"></i>
         Tiến hành đặt hàng
     </a>
 </div>
