@@ -111,7 +111,7 @@ require_once '/var/www/src/includes/admin/navbar.php';
                             href="/admin/orders/detail.php?id=<?= (int) $order['OrderID'] ?>"
                             class="btn btn-sm btn-primary"
                         >
-                            Xem
+                            <i class="fa-regular fa-eye me-1" aria-hidden="true"></i>Xem
                         </a>
                     </td>
 

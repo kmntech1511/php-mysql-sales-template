@@ -289,7 +289,7 @@ require_once '/var/www/src/includes/admin/navbar.php';
             href="/admin/orders/"
             class="btn btn-outline-secondary"
         >
-            Quay lại
+            <i class="fa-solid fa-arrow-left me-2" aria-hidden="true"></i>Quay lại
         </a>
     </div>
 
@@ -397,6 +397,7 @@ require_once '/var/www/src/includes/admin/navbar.php';
                                 name="update_status"
                                 class="btn btn-primary"
                             >
+                                <i class="fa-solid fa-floppy-disk me-2" aria-hidden="true"></i>
                                 Cập nhật
                             </button>
 
