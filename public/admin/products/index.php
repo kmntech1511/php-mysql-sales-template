@@ -31,7 +31,7 @@ require_once '/var/www/src/includes/admin/navbar.php';
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Quản lý sản phẩm</h2>
-        <a href="/admin/products/create.php" class="btn btn-primary">Thêm sản phẩm</a>
+        <a href="/admin/products/create.php" class="btn btn-primary"><i class="fa-solid fa-plus me-2" aria-hidden="true"></i>Thêm sản phẩm</a>
     </div>
 
     <div class="table-responsive">
@@ -79,10 +79,10 @@ require_once '/var/www/src/includes/admin/navbar.php';
                         <?php endif; ?>
                     </td>
                     <td>
-                        <a href="/admin/products/edit.php?id=<?= $product['ProductID'] ?>" class="btn btn-sm btn-warning">Sửa</a>
+                        <a href="/admin/products/edit.php?id=<?= $product['ProductID'] ?>" class="btn btn-sm btn-warning"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i><span class="visually-hidden">Sửa</span></a>
                         <form action="/admin/products/delete.php" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');">
                             <input type="hidden" name="id" value="<?= $product['ProductID'] ?>">
-                            <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                            <button type="submit" class="btn btn-sm btn-danger"><i class="fa-regular fa-trash-can" aria-hidden="true"></i><span class="visually-hidden">Xóa</span></button>
                         </form>
                     </td>
                 </tr>
