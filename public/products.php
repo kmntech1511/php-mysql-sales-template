@@ -145,8 +145,12 @@ require_once '/var/www/src/includes/frontend/navbar.php';
         </div>
 
         <div class="col-md-auto align-self-end">
-            <button type="submit" class="btn btn-primary">Tìm kiếm</button>
-            <a href="/products.php" class="btn btn-outline-secondary">Xóa bộ lọc</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-magnifying-glass me-2" aria-hidden="true"></i>Tìm kiếm
+            </button>
+            <a href="/products.php" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-rotate-left me-2" aria-hidden="true"></i>Xóa bộ lọc
+            </a>
         </div>
     </form>
 
@@ -191,7 +195,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                                 href="/product-detail.php?id=<?= (int) $product['ProductID'] ?>"
                                 class="btn btn-outline-primary mt-auto"
                             >
-                                Xem chi tiết
+                                <i class="fa-regular fa-eye me-2" aria-hidden="true"></i>Xem chi tiết
                             </a>
                         </div>
                     </div>

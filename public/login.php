@@ -168,6 +168,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                     type="submit"
                     class="btn btn-primary"
                 >
+                    <i class="fa-solid fa-right-to-bracket me-2" aria-hidden="true"></i>
                     Đăng nhập
                 </button>
 

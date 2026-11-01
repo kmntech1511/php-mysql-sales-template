@@ -393,6 +393,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                         </div>
 
                         <button type="submit" name="place_order" class="btn btn-success">
+                            <i class="fa-solid fa-check me-2" aria-hidden="true"></i>
                             Xác nhận đặt hàng
                         </button>
                     </form>

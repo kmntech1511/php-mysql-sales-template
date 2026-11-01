@@ -243,6 +243,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                     type="submit"
                     class="btn btn-primary"
                 >
+                    <i class="fa-solid fa-user-plus me-2" aria-hidden="true"></i>
                     Đăng ký
                 </button>
 

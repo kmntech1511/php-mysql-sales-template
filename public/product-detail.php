@@ -107,7 +107,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
 
     <div class="mb-4">
         <a href="/products.php" class="text-decoration-none">
-            &larr; Quay lại danh sách sản phẩm
+            <i class="fa-solid fa-arrow-left me-2" aria-hidden="true"></i>Quay lại danh sách sản phẩm
         </a>
     </div>
 
@@ -238,6 +238,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                     name="add_to_cart"
                     class="btn btn-primary"
                 >
+                    <i class="fa-solid fa-cart-plus me-2" aria-hidden="true"></i>
                     Thêm vào giỏ hàng
                 </button>
 

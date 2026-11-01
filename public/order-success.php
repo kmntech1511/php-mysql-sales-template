@@ -187,6 +187,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                 href="/products.php"
                 class="btn btn-primary"
             >
+                <i class="fa-solid fa-arrow-left me-2" aria-hidden="true"></i>
                 Tiếp tục mua hàng
             </a>
 
