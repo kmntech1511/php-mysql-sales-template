@@ -4,7 +4,6 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
 <nav class="navbar navbar-expand-md navbar-light admin-navbar">
     <div class="container">
-        <a class="navbar-brand" href="/admin/"><i class="fa-solid fa-store me-2" aria-hidden="true"></i>Quản trị cửa hàng</a>
         <button
             class="navbar-toggler"
             type="button"
@@ -26,6 +25,9 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?= str_starts_with($currentPath, '/admin/products') ? 'active' : '' ?>" href="/admin/products/" <?= str_starts_with($currentPath, '/admin/products') ? 'aria-current="page"' : '' ?>><i class="fa-solid fa-box-open me-1" aria-hidden="true"></i>Sản phẩm</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= str_starts_with($currentPath, '/admin/suppliers') ? 'active' : '' ?>" href="/admin/suppliers/" <?= str_starts_with($currentPath, '/admin/suppliers') ? 'aria-current="page"' : '' ?>><i class="fa-solid fa-truck-ramp-box me-1" aria-hidden="true"></i>Nhà cung cấp</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?= str_starts_with($currentPath, '/admin/orders') ? 'active' : '' ?>" href="/admin/orders/" <?= str_starts_with($currentPath, '/admin/orders') ? 'aria-current="page"' : '' ?>><i class="fa-solid fa-clipboard-list me-1" aria-hidden="true"></i>Đơn hàng</a>
