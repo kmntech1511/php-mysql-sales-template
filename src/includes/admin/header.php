@@ -27,26 +27,63 @@
         }
 
         .admin-heading {
-            padding: 28px 0 24px;
-            color: #fff;
-            background: var(--admin-blue);
+            position: relative;
+            overflow: hidden;
+            padding: 30px 0 26px;
+            color: var(--admin-ink);
+            background:
+                linear-gradient(90deg, rgba(255, 255, 255, .94), rgba(255, 255, 255, .79)),
+                url("https://wallpapers.com/images/hd/light-color-background-vmkuihk29pi1xq65.jpg") center 48% / cover no-repeat;
+            border-bottom: 1px solid var(--admin-border);
+        }
+
+        .admin-heading::after {
+            position: absolute;
+            top: -110px;
+            right: 7%;
+            width: 290px;
+            height: 290px;
+            border: 1px solid rgba(46, 111, 155, .12);
+            border-radius: 50%;
+            box-shadow: 0 0 0 32px rgba(46, 111, 155, .035), 0 0 0 66px rgba(46, 111, 155, .025);
+            content: "";
+            pointer-events: none;
         }
 
         .admin-heading .container {
+            position: relative;
+            z-index: 1;
             padding-left: 12px;
             padding-right: 12px;
         }
 
         .admin-heading h1 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             margin: 0;
             font-size: clamp(1.35rem, 2.4vw, 1.8rem);
             font-weight: 650;
             letter-spacing: -.02em;
         }
 
+        .admin-brand-mark {
+            display: inline-grid;
+            width: 42px;
+            height: 42px;
+            flex: 0 0 auto;
+            place-items: center;
+            color: #fff;
+            background: var(--admin-blue-dark);
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(27, 55, 75, .12);
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
         .admin-heading p {
-            margin: 6px 0 0;
-            color: rgba(255, 255, 255, .82);
+            margin: 8px 0 0 54px;
+            color: var(--admin-muted);
             font-size: .95rem;
         }
 
@@ -55,18 +92,6 @@
             background: #fff;
             border-bottom: 1px solid var(--admin-border);
             box-shadow: 0 2px 8px rgba(27, 55, 32, .04);
-        }
-
-        .admin-navbar .navbar-brand {
-            padding: 17px 18px 17px 0;
-            color: var(--admin-blue-dark);
-            font-size: 1rem;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .admin-navbar .navbar-brand:hover {
-            color: var(--admin-blue-dark);
         }
 
         .admin-navbar .navbar-nav {
@@ -283,7 +308,7 @@
 <body>
     <div class="admin-heading">
         <div class="container">
-            <h1>Hệ thống quản lý bán hàng</h1>
+            <h1><span class="admin-brand-mark" aria-hidden="true">C</span>CellPT</h1>
             <p>Khu vực quản trị và vận hành cửa hàng</p>
         </div>
     </div>
