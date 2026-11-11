@@ -27,7 +27,7 @@ function getCartItems($conn, $cart)
                 SELECT pi.ImageFile
                 FROM product_images pi
                 WHERE pi.ProductID = p.ProductID
-                  AND pi.IsPrimary = 1
+                      ORDER BY pi.IsPrimary DESC, pi.ProductImageID ASC
                 LIMIT 1
             ) AS ImageFile
         FROM products p

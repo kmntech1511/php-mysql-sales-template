@@ -41,8 +41,7 @@ $productResult = $conn->query("
             SELECT pi.ImageFile
             FROM product_images pi
             WHERE pi.ProductID = p.ProductID
-              AND pi.IsPrimary = 1
-            ORDER BY pi.SortOrder, pi.ProductImageID
+              ORDER BY pi.IsPrimary DESC, pi.SortOrder, pi.ProductImageID
             LIMIT 1
         ) AS ImageFile
     FROM products p
