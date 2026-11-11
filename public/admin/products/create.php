@@ -3,6 +3,10 @@ $pageTitle = 'Thêm sản phẩm';
 require_once '/var/www/src/config/database.php';
 
 $error = '';
+$unitOptions = ['Chiếc', 'Cái', 'Bộ', 'Hộp', 'Gói', 'Cặp', 'Thùng', 'Mét', 'Kg'];
+$codeResult = $conn->query("SELECT COALESCE(MAX(CAST(SUBSTRING(ProductCode, 3) AS UNSIGNED)), 0) AS LastNumber FROM products WHERE ProductCode REGEXP '^SP[0-9]+$'");
+$nextProductCode = 'SP' . str_pad((int) $codeResult->fetch_assoc()['LastNumber'] + 1, 3, '0', STR_PAD_LEFT);
+$codeResult->free();
 
 $sqlCategories = "SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryName";
 $categories = $conn->query($sqlCategories);
@@ -11,7 +15,7 @@ $sqlSuppliers = "SELECT SupplierID, SupplierName FROM suppliers ORDER BY Supplie
 $suppliers = $conn->query($sqlSuppliers);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $productCode = trim($_POST['product_code'] ?? '');
+    $productCode = $nextProductCode;
     $productName = trim($_POST['product_name'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $unit = trim($_POST['unit'] ?? '');
@@ -89,6 +93,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try {
                     $conn->begin_transaction();
 
+                    $codeResult = $conn->query("SELECT COALESCE(MAX(CAST(SUBSTRING(ProductCode, 3) AS UNSIGNED)), 0) AS LastNumber FROM products WHERE ProductCode REGEXP '^SP[0-9]+$'");
+                    $productCode = 'SP' . str_pad((int) $codeResult->fetch_assoc()['LastNumber'] + 1, 3, '0', STR_PAD_LEFT);
+                    $codeResult->free();
+
                     $sql = "INSERT INTO products (ProductCode, ProductName, Description, Unit, Price, StockQuantity, IsActive, SupplierID, CategoryID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     $stmt = $conn->prepare($sql);
                     $stmt->bind_param('ssssdiiii', $productCode, $productName, $description, $unit, $price, $stockQuantity, $isActive, $supplierID, $categoryID);
@@ -162,7 +170,8 @@ require_once '/var/www/src/includes/admin/navbar.php';
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="productCode" class="form-label">Mã sản phẩm</label>
-                <input type="text" class="form-control" id="productCode" name="product_code" value="<?= htmlspecialchars($_POST['product_code'] ?? '') ?>" required>
+                <input type="text" class="form-control" id="productCode" name="product_code" value="<?= htmlspecialchars($nextProductCode) ?>" readonly>
+                <div class="form-text">Mã được tự động tạo khi lưu sản phẩm.</div>
             </div>
             <div class="col-md-8 mb-3">
                 <label for="productName" class="form-label">Tên sản phẩm</label>
@@ -178,7 +187,12 @@ require_once '/var/www/src/includes/admin/navbar.php';
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="unit" class="form-label">Đơn vị tính</label>
-                <input type="text" class="form-control" id="unit" name="unit" value="<?= htmlspecialchars($_POST['unit'] ?? '') ?>">
+                <select class="form-select" id="unit" name="unit">
+                    <option value="">-- Chọn đơn vị --</option>
+                    <?php foreach ($unitOptions as $unitOption): ?>
+                        <option value="<?= htmlspecialchars($unitOption) ?>" <?= ($_POST['unit'] ?? '') === $unitOption ? 'selected' : '' ?>><?= htmlspecialchars($unitOption) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="price" class="form-label">Giá</label>

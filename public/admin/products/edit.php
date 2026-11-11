@@ -20,6 +20,11 @@ if (!$product) {
 }
 
 $error = '';
+$unitOptions = ['Chiếc', 'Cái', 'Bộ', 'Hộp', 'Gói', 'Cặp', 'Thùng', 'Mét', 'Kg'];
+$currentUnit = $product['Unit'] ?? '';
+if ($currentUnit !== '' && !in_array($currentUnit, $unitOptions, true)) {
+    array_unshift($unitOptions, $currentUnit);
+}
 $categories = $conn->query("SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryName");
 $suppliers = $conn->query("SELECT SupplierID, SupplierName FROM suppliers ORDER BY SupplierName");
 
@@ -46,6 +51,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!$imageToDelete) {
                 throw new Exception('Không tìm thấy ảnh cần xóa.');
+            }
+
+            // Luôn giữ lại ít nhất một ảnh đã được liên kết với sản phẩm.
+            $stmtImageCount = $conn->prepare("SELECT COUNT(*) AS ImageCount FROM product_images WHERE ProductID = ?");
+            $stmtImageCount->bind_param('i', $productID);
+            $stmtImageCount->execute();
+            $imageCount = (int) $stmtImageCount->get_result()->fetch_assoc()['ImageCount'];
+            $stmtImageCount->close();
+
+            if ($imageCount <= 1) {
+                throw new Exception('Sản phẩm phải giữ lại ít nhất một ảnh.');
             }
 
             $sqlDelete = "
@@ -93,6 +109,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtReorder->bind_param('ii', $productID, $deletedSortOrder);
             $stmtReorder->execute();
             $stmtReorder->close();
+
+            // Luôn chuẩn hóa ảnh chính sau khi xóa, kể cả dữ liệu cũ bị thiếu ảnh chính.
+            $stmtResetPrimary = $conn->prepare("UPDATE product_images SET IsPrimary = 0 WHERE ProductID = ?");
+            $stmtResetPrimary->bind_param('i', $productID);
+            $stmtResetPrimary->execute();
+            $stmtResetPrimary->close();
+
+            $stmtPromotePrimary = $conn->prepare("UPDATE product_images SET IsPrimary = 1 WHERE ProductImageID = (SELECT ProductImageID FROM (SELECT ProductImageID FROM product_images WHERE ProductID = ? ORDER BY SortOrder, ProductImageID LIMIT 1) AS first_image)");
+            $stmtPromotePrimary->bind_param('i', $productID);
+            $stmtPromotePrimary->execute();
+            $stmtPromotePrimary->close();
 
             $conn->commit();
 
@@ -330,7 +357,8 @@ require_once '/var/www/src/includes/admin/navbar.php';
         <div class="row mb-3">
             <div class="col-md-6">
                 <label class="form-label">Mã sản phẩm</label>
-                <input type="text" name="product_code" class="form-control" value="<?= htmlspecialchars($product['ProductCode']) ?>" required>
+                <input type="text" name="product_code" class="form-control" value="<?= htmlspecialchars($product['ProductCode']) ?>" readonly>
+                <div class="form-text">Mã sản phẩm được tạo tự động và không thay đổi khi chỉnh sửa.</div>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Tên sản phẩm</label>
@@ -346,7 +374,12 @@ require_once '/var/www/src/includes/admin/navbar.php';
         <div class="row mb-3">
             <div class="col-md-4">
                 <label class="form-label">Đơn vị tính</label>
-                <input type="text" name="unit" class="form-control" value="<?= htmlspecialchars($product['Unit'] ?? '') ?>">
+                <select name="unit" class="form-select">
+                    <option value="">-- Chọn đơn vị --</option>
+                    <?php foreach ($unitOptions as $unitOption): ?>
+                        <option value="<?= htmlspecialchars($unitOption) ?>" <?= $currentUnit === $unitOption ? 'selected' : '' ?>><?= htmlspecialchars($unitOption) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
             <div class="col-md-4">
                 <label class="form-label">Giá bán</label>
