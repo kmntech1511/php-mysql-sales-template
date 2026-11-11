@@ -6,6 +6,9 @@
     <title><?= htmlspecialchars($pageTitle ?? 'Quản lý bán hàng') ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --admin-blue: #4a90c2;
@@ -301,6 +304,79 @@
             .admin-heading {
                 padding: 22px 0 18px;
             }
+        }
+
+        /* Admin visual system */
+        :root {
+            --admin-blue: #2563eb;
+            --admin-blue-dark: #1d4ed8;
+            --admin-blue-soft: #eff6ff;
+            --admin-ink: #0f172a;
+            --admin-muted: #64748b;
+            --admin-border: #e2e8f0;
+            --admin-background: #f8fafc;
+        }
+
+        body {
+            color: var(--admin-ink);
+            background: #f1f5f9;
+            font-family: "Manrope", "Segoe UI", Arial, sans-serif;
+            font-size: .92rem;
+        }
+        .admin-heading {
+            padding: 22px 0 20px;
+            color: #fff;
+            background: linear-gradient(120deg, #0f172a, #172554 58%, #1d4ed8);
+            border-bottom: 0;
+        }
+        .admin-heading::after { border-color: rgba(147,197,253,.18); box-shadow: 0 0 0 32px rgba(147,197,253,.05), 0 0 0 66px rgba(147,197,253,.03); }
+        .admin-heading h1 { font-size: 1.35rem; font-weight: 800; letter-spacing: -.04em; }
+        .admin-brand-mark {
+            width: 38px; height: 38px; border-radius: 11px;
+            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            box-shadow: 0 8px 18px rgba(0,0,0,.22);
+        }
+        .admin-heading p { margin-top: 6px; color: #bfdbfe; font-size: .8rem; }
+        .admin-navbar {
+            position: sticky; top: 0; z-index: 1000;
+            background: rgba(255,255,255,.96);
+            border-bottom: 1px solid var(--admin-border);
+            box-shadow: 0 2px 12px rgba(15,23,42,.06);
+            backdrop-filter: blur(14px);
+        }
+        .admin-navbar .navbar-nav { gap: 2px; }
+        .admin-navbar .nav-link {
+            padding: 15px 13px; color: #475569; font-size: .82rem; font-weight: 700;
+            border-bottom: 2px solid transparent;
+        }
+        .admin-navbar .nav-link:hover, .admin-navbar .nav-link.active {
+            color: var(--admin-blue); background: var(--admin-blue-soft); border-bottom-color: var(--admin-blue);
+        }
+        body > .container, body > main.container {
+            width: min(100% - 32px, 1320px); margin-top: 28px !important; margin-bottom: 32px;
+            padding: clamp(20px, 3vw, 34px); background: #fff; border: 1px solid var(--admin-border);
+            border-radius: 18px; box-shadow: 0 12px 32px rgba(15,23,42,.055);
+        }
+        body > main.container { padding-top: 32px !important; padding-bottom: 32px !important; }
+        h1, h2, h3, h4, h5, h6 { letter-spacing: -.035em; }
+        .btn, .form-control, .form-select { border-radius: 10px; }
+        .btn { font-weight: 700; }
+        .btn-primary, .btn-success { --bs-btn-bg: var(--admin-blue); --bs-btn-border-color: var(--admin-blue); --bs-btn-hover-bg: var(--admin-blue-dark); --bs-btn-hover-border-color: var(--admin-blue-dark); }
+        .btn-outline-primary { --bs-btn-color: var(--admin-blue); --bs-btn-border-color: #bfdbfe; --bs-btn-hover-bg: var(--admin-blue); --bs-btn-hover-border-color: var(--admin-blue); }
+        .btn-warning { --bs-btn-bg: #fbbf24; --bs-btn-border-color: #fbbf24; --bs-btn-hover-bg: #f59e0b; --bs-btn-hover-border-color: #f59e0b; border: 0; }
+        .form-control, .form-select { padding: .7rem .85rem; border-color: #dbe3ee; }
+        .card, .dashboard-stat, .dashboard-panel { border-radius: 16px; border-color: var(--admin-border); box-shadow: 0 8px 24px rgba(15,23,42,.045); }
+        .card-header { background: #f8fafc; }
+        .table-responsive { border-radius: 14px; }
+        .table { --bs-table-striped-bg: #f8fafc; --bs-table-hover-bg: #eff6ff; }
+        .table > :not(caption) > * > * { padding: 13px 14px; }
+        .table thead.table-dark th { background: #172554; border-color: rgba(255,255,255,.12); font-size: .78rem; letter-spacing: .02em; text-transform: uppercase; }
+        .table tbody td { font-size: .86rem; }
+        .badge { padding: .48em .7em; border-radius: 7px; font-weight: 700; }
+        .admin-footer { color: #94a3b8; background: #0f172a; border-top: 0; }
+        @media (max-width: 767.98px) {
+            .admin-navbar .nav-link { padding: 10px 12px; }
+            body > .container, body > main.container { width: min(100% - 20px, 1320px); margin-top: 18px !important; padding: 17px; border-radius: 14px; }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
