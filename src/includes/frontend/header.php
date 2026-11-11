@@ -14,6 +14,9 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
         rel="stylesheet"
     >
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -863,6 +866,83 @@
             .store-hero-visual img {
                 max-height: 210px;
             }
+        }
+        /* Frontend visual system */
+        :root {
+            --store-blue: #2563eb;
+            --store-blue-dark: #1d4ed8;
+            --store-blue-soft: #eff6ff;
+            --store-ink: #0f172a;
+            --store-muted: #64748b;
+            --store-border: #e2e8f0;
+            --store-background: #f8fafc;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            color: var(--store-ink);
+            background: var(--store-background);
+            font-family: "Manrope", "Segoe UI", Arial, sans-serif;
+            font-size: .94rem;
+        }
+        .store-navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(255,255,255,.94);
+            border-bottom: 1px solid var(--store-border);
+            box-shadow: 0 1px 12px rgba(15,23,42,.04);
+            backdrop-filter: blur(14px);
+        }
+        .store-navbar .container { min-height: 68px; }
+        .store-navbar .navbar-brand { color: var(--store-ink); font-weight: 800; }
+        .store-brand-mark {
+            width: 34px; height: 34px; border-radius: 10px;
+            background: linear-gradient(135deg, #2563eb, #06b6d4);
+            box-shadow: 0 7px 16px rgba(37,99,235,.22);
+        }
+        .store-navbar .nav-link { color: #475569; font-size: .86rem; font-weight: 700; }
+        .store-navbar .nav-link:hover, .store-navbar .nav-link.active { color: var(--store-blue); }
+        .store-navbar .nav-link.active { position: relative; }
+        .store-navbar .nav-link.active::after {
+            position: absolute; right: 14px; bottom: 3px; left: 14px; height: 2px;
+            background: var(--store-blue); border-radius: 99px; content: "";
+        }
+        .btn, .form-control, .form-select { border-radius: 10px; }
+        .btn { font-weight: 700; }
+        .btn-store, .btn-primary, .btn-success {
+            --bs-btn-bg: var(--store-blue); --bs-btn-border-color: var(--store-blue);
+            --bs-btn-hover-bg: var(--store-blue-dark); --bs-btn-hover-border-color: var(--store-blue-dark);
+        }
+        .btn-outline-store, .btn-outline-primary {
+            --bs-btn-color: var(--store-blue); --bs-btn-border-color: #bfdbfe;
+            --bs-btn-hover-bg: var(--store-blue); --bs-btn-hover-border-color: var(--store-blue);
+        }
+        body > .container.py-4, body > main.container.py-5 {
+            margin-top: 28px; padding: clamp(20px, 3vw, 36px) !important;
+            border: 1px solid var(--store-border); border-radius: 18px;
+            box-shadow: 0 12px 35px rgba(15,23,42,.045);
+        }
+        h1, h2, h3, h4, h5, h6 { letter-spacing: -.035em; }
+        .card { border: 1px solid var(--store-border); border-radius: 16px; box-shadow: 0 8px 24px rgba(15,23,42,.045); }
+        .card img, .bg-light { border-color: var(--store-border) !important; }
+        .form-control, .form-select { border-color: #dbe3ee; padding: .72rem .85rem; }
+        .store-footer { color: #94a3b8; background: #0f172a; }
+        .store-footer a { color: #cbd5e1; }
+        .store-footer a:hover { color: #fff; }
+        .store-footer .store-brand-mark { color: #fff; }
+        .store-footer-bottom { color: #64748b; border-top-color: rgba(148,163,184,.18); }
+        .store-home-hero { padding: 32px 0 24px; background: var(--store-background); }
+        .store-home-hero-panel, .store-hero { border: 0; border-radius: 24px; background: linear-gradient(115deg,#eff6ff 0%,#f8fafc 60%,#e0f2fe 100%); box-shadow: 0 18px 45px rgba(37,99,235,.08); }
+        .store-home-category-nav, .store-home-about, .store-about-panel { border-radius: 16px; }
+        .store-product-card { border-radius: 16px; border-color: var(--store-border); }
+        .store-product-image { background: #f8fafc; }
+        .store-product-price { color: var(--store-blue); }
+        .pagination .page-link { color: var(--store-blue); border-color: var(--store-border); }
+        .pagination .active .page-link { background: var(--store-blue); border-color: var(--store-blue); }
+        @media (max-width: 991.98px) {
+            .store-navbar .nav-link.active::after { display: none; }
+            .store-navbar .navbar-collapse { padding: 10px 0 14px; }
         }
     </style>
 
