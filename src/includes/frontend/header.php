@@ -944,10 +944,70 @@
             .store-navbar .nav-link.active::after { display: none; }
             .store-navbar .navbar-collapse { padding: 10px 0 14px; }
         }
+
+        /* Shared interaction layer */
+        :root {
+            --store-cyan: #06b6d4;
+            --store-orange: #f97316;
+            --store-radius-lg: 22px;
+            --store-shadow: 0 18px 45px rgba(15, 23, 42, .07);
+        }
+        ::selection { color: #fff; background: var(--store-blue); }
+        a, button, .card, .store-product-card, .store-category-card { transition: all .28s cubic-bezier(.2,.7,.2,1); }
+        .store-navbar.scrolled { box-shadow: 0 8px 25px rgba(15,23,42,.1); }
+        .store-navbar .navbar-brand:hover { transform: translateY(-1px); }
+        .store-navbar .nav-link { position: relative; }
+        .store-navbar .nav-link:not(.active)::after {
+            position: absolute; right: 14px; bottom: 3px; left: 14px; height: 2px;
+            background: var(--store-cyan); border-radius: 99px; content: "";
+            transform: scaleX(0); transform-origin: center; transition: transform .25s ease;
+        }
+        .store-navbar .nav-link:hover::after { transform: scaleX(1); }
+        .store-navbar .badge { background: var(--store-orange) !important; }
+        .store-navbar .badge.bump { animation: store-bump .45s ease; }
+        @keyframes store-bump { 40% { transform: scale(1.28); } 100% { transform: scale(1); } }
+        .store-home-hero-panel, .store-hero { position: relative; isolation: isolate; overflow: hidden; }
+        .store-home-hero-panel::before, .store-hero::before {
+            position: absolute; z-index: -1; top: -160px; right: -100px; width: 440px; height: 440px;
+            background: radial-gradient(circle, rgba(37,99,235,.14), transparent 68%); border-radius: 50%; content: "";
+        }
+        .store-home-hero-copy h1, .store-hero h1 { animation: store-rise .65s both ease-out; }
+        .store-home-search { border-radius: 14px; box-shadow: 0 12px 30px rgba(37,99,235,.12); }
+        .store-home-search:focus-within { border-color: #93c5fd; box-shadow: 0 0 0 4px rgba(37,99,235,.12), 0 12px 30px rgba(37,99,235,.12); }
+        .store-product-card:hover .store-product-image img, .card:hover > .bg-light img { transform: scale(1.045); }
+        .store-product-image img, .card > .bg-light img { transition: transform .45s cubic-bezier(.2,.7,.2,1); }
+        .store-product-card .btn { transform: translateY(3px); opacity: .9; }
+        .store-product-card:hover .btn { transform: translateY(0); opacity: 1; }
+        .store-product-card, .store-category-card, .store-benefit, .dashboard-stat, .dashboard-panel { box-shadow: 0 8px 25px rgba(15,23,42,.035); }
+        .store-product-card:hover, .card:hover { box-shadow: var(--store-shadow); }
+        .store-home-product-section, .store-section, .store-home-about, body > .container, body > main.container { animation: store-rise .55s both ease-out; }
+        .store-home-product-section:nth-of-type(3) { animation-delay: .08s; }
+        .store-home-product-section:nth-of-type(4) { animation-delay: .14s; }
+        .store-eyebrow { color: var(--store-blue); }
+        .store-home-about { background: linear-gradient(120deg, #eff6ff, #ecfeff); box-shadow: 0 12px 35px rgba(37,99,235,.07); }
+        .store-footer { margin-top: 40px; }
+        .store-footer .store-brand-mark { background: linear-gradient(135deg, #2563eb, #06b6d4); }
+        body > .container.py-4 form, body > main.container.py-5 form { padding: 20px; background: #f8fafc; border: 1px solid var(--store-border); border-radius: 16px; }
+        body > .container.py-4 .card, body > main.container.py-5 .card { overflow: hidden; }
+        body > .container.py-4 .card-body, body > main.container.py-5 .card-body { padding: 22px; }
+        .alert { border: 0; border-radius: 12px; }
+        .empty-state { padding: 42px 20px; color: var(--store-muted); text-align: center; }
+        @keyframes store-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+        }
     </style>
 
     <script
         src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js">
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navbar = document.querySelector('.store-navbar');
+            const updateNavbar = () => navbar?.classList.toggle('scrolled', window.scrollY > 10);
+            updateNavbar();
+            window.addEventListener('scroll', updateNavbar, { passive: true });
+        });
     </script>
 </head>
 
