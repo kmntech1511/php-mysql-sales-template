@@ -1,253 +1,32 @@
 <?php
 $pageTitle = 'Thêm sản phẩm';
 require_once '/var/www/src/config/database.php';
-
+require_once '/var/www/src/includes/admin/product-images.php';
 $error = '';
+$imageDirectory = productImageDirectory();
+$libraryImages = listProductLibraryImages($imageDirectory);
 $unitOptions = ['Chiếc', 'Cái', 'Bộ', 'Hộp', 'Gói', 'Cặp', 'Thùng', 'Mét', 'Kg'];
 $codeResult = $conn->query("SELECT COALESCE(MAX(CAST(SUBSTRING(ProductCode, 3) AS UNSIGNED)), 0) AS LastNumber FROM products WHERE ProductCode REGEXP '^SP[0-9]+$'");
-$nextProductCode = 'SP' . str_pad((int) $codeResult->fetch_assoc()['LastNumber'] + 1, 3, '0', STR_PAD_LEFT);
-$codeResult->free();
-
-$sqlCategories = "SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryName";
-$categories = $conn->query($sqlCategories);
-
-$sqlSuppliers = "SELECT SupplierID, SupplierName FROM suppliers ORDER BY SupplierName";
-$suppliers = $conn->query($sqlSuppliers);
-
+$nextProductCode = 'SP' . str_pad((int) $codeResult->fetch_assoc()['LastNumber'] + 1, 3, '0', STR_PAD_LEFT); $codeResult->free();
+$categories = $conn->query("SELECT CategoryID, CategoryName FROM categories ORDER BY CategoryName");
+$suppliers = $conn->query("SELECT SupplierID, SupplierName FROM suppliers ORDER BY SupplierName");
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $productCode = $nextProductCode;
-    $productName = trim($_POST['product_name'] ?? '');
-    $description = trim($_POST['description'] ?? '');
-    $unit = trim($_POST['unit'] ?? '');
-    $price = (float) ($_POST['price'] ?? 0);
-    $stockQuantity = (int) ($_POST['stock_quantity'] ?? 0);
-    $categoryID = (int) ($_POST['category_id'] ?? 0);
-    $supplierID = (int) ($_POST['supplier_id'] ?? 0);
-    $isActive = isset($_POST['is_active']) ? 1 : 0;
-
-    $files = $_FILES['product_images'] ?? null;
-
-    if ($productCode === '') {
-        $error = 'Mã sản phẩm không được để trống.';
-    } elseif ($productName === '') {
-        $error = 'Tên sản phẩm không được để trống.';
-    } elseif ($price < 0) {
-        $error = 'Giá sản phẩm không hợp lệ.';
-    } elseif ($stockQuantity < 0) {
-        $error = 'Số lượng tồn kho không hợp lệ.';
-    } elseif ($categoryID <= 0) {
-        $error = 'Vui lòng chọn danh mục.';
-    } elseif ($supplierID <= 0) {
-        $error = 'Vui lòng chọn nhà cung cấp.';
-    } elseif (!$files || !isset($files['name']) || !is_array($files['name'])) {
-        $error = 'Vui lòng chọn ảnh sản phẩm.';
-    } else {
-        $fileCount = count($files['name']);
-
-        if ($fileCount < 1 || $fileCount > 4) {
-            $error = 'Chỉ được chọn từ 1 đến 4 ảnh.';
-        } else {
-            $maxSize = 2 * 1024 * 1024;
-            $extensionMap = [
-                'image/jpeg' => 'jpg',
-                'image/png'  => 'png',
-                'image/webp' => 'webp'
-            ];
-
-            $finfo = new finfo(FILEINFO_MIME_TYPE);
-            $preparedImages = [];
-
-            // Kiểm tra tính hợp lệ của TẤT CẢ các ảnh trước khi bắt đầu transaction
-            for ($i = 0; $i < $fileCount; $i++) {
-                if ($files['error'][$i] !== UPLOAD_ERR_OK) {
-                    $error = 'Có file ảnh upload không thành công.';
-                    break;
-                }
-
-                if ($files['size'][$i] > $maxSize) {
-                    $error = 'Mỗi file ảnh không được vượt quá 2 MB.';
-                    break;
-                }
-
-                $mimeType = $finfo->file($files['tmp_name'][$i]);
-
-                if (!isset($extensionMap[$mimeType])) {
-                    $error = 'Chỉ cho phép file JPG, PNG hoặc WebP.';
-                    break;
-                }
-
-                $extension = $extensionMap[$mimeType];
-                $newFileName = 'product-' . bin2hex(random_bytes(8)) . '.' . $extension;
-
-                $preparedImages[] = [
-                    'tmp_name'   => $files['tmp_name'][$i],
-                    'file_name'  => $newFileName,
-                    'is_primary' => ($i === 0) ? 1 : 0,
-                    'sort_order' => $i + 1
-                ];
-            }
-
-            if ($error === '') {
-                $movedFiles = [];
-
-                try {
-                    $conn->begin_transaction();
-
-                    $codeResult = $conn->query("SELECT COALESCE(MAX(CAST(SUBSTRING(ProductCode, 3) AS UNSIGNED)), 0) AS LastNumber FROM products WHERE ProductCode REGEXP '^SP[0-9]+$'");
-                    $productCode = 'SP' . str_pad((int) $codeResult->fetch_assoc()['LastNumber'] + 1, 3, '0', STR_PAD_LEFT);
-                    $codeResult->free();
-
-                    $sql = "INSERT INTO products (ProductCode, ProductName, Description, Unit, Price, StockQuantity, IsActive, SupplierID, CategoryID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param('ssssdiiii', $productCode, $productName, $description, $unit, $price, $stockQuantity, $isActive, $supplierID, $categoryID);
-
-                    if (!$stmt->execute()) {
-                        throw new Exception('Không thể thêm sản phẩm.');
-                    }
-
-                    $productID = $conn->insert_id;
-                    $stmt->close();
-
-                    $sqlImage = "INSERT INTO product_images (ProductID, ImageFile, AltText, IsPrimary, SortOrder) VALUES (?, ?, ?, ?, ?)";
-                    $stmtImage = $conn->prepare($sqlImage);
-
-                    foreach ($preparedImages as $index => $image) {
-                        $destination = '/var/www/html/uploads/products/' . $image['file_name'];
-
-                        if (!move_uploaded_file($image['tmp_name'], $destination)) {
-                            throw new Exception('Không thể lưu một trong các file ảnh.');
-                        }
-
-                        $movedFiles[] = $destination;
-
-                        $altText = ($image['is_primary'] === 1) ? $productName . ' - ảnh chính' : $productName . ' - ảnh ' . ($index + 1);
-                        $imageFile = $image['file_name'];
-                        $isPrimary = $image['is_primary'];
-                        $sortOrder = $image['sort_order'];
-
-                        $stmtImage->bind_param('issii', $productID, $imageFile, $altText, $isPrimary, $sortOrder);
-
-                        if (!$stmtImage->execute()) {
-                            throw new Exception('Không thể lưu thông tin ảnh.');
-                        }
-                    }
-
-                    $stmtImage->close();
-                    $conn->commit();
-
-                    header('Location: /admin/products/');
-                    exit;
-
-                } catch (Throwable $e) {
-                    $conn->rollback();
-
-                    // Xóa sạch file đã lỡ move nếu DB gặp lỗi
-                    foreach ($movedFiles as $movedFile) {
-                        if (file_exists($movedFile)) {
-                            unlink($movedFile);
-                        }
-                    }
-
-                    $error = $e->getMessage();
-                }
-            }
-        }
-    }
+    $productCode=$nextProductCode; $productName=trim($_POST['product_name']??''); $description=trim($_POST['description']??''); $unit=trim($_POST['unit']??''); $price=(float)($_POST['price']??0); $stockQuantity=(int)($_POST['stock_quantity']??0); $categoryID=(int)($_POST['category_id']??0); $supplierID=(int)($_POST['supplier_id']??0); $isActive=isset($_POST['is_active'])?1:0; $movedFiles=[];
+    try {
+        $preparedImages=[]; foreach(validateExistingProductImages($_POST['existing_images']??[], $imageDirectory) as $name) $preparedImages[]=['file_name'=>$name,'is_new'=>false];
+        if($productName==='') throw new Exception('Tên sản phẩm không được để trống.'); if($price<0) throw new Exception('Giá sản phẩm không hợp lệ.'); if($stockQuantity<0) throw new Exception('Số lượng tồn kho không hợp lệ.'); if($categoryID<=0) throw new Exception('Vui lòng chọn danh mục.'); if($supplierID<=0) throw new Exception('Vui lòng chọn nhà cung cấp.');
+        $files=$_FILES['product_images']??null; if($files&&isset($files['name'])&&is_array($files['name'])) { $finfo=new finfo(FILEINFO_MIME_TYPE); $map=['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp']; for($i=0;$i<count($files['name']);$i++){if($files['error'][$i]===UPLOAD_ERR_NO_FILE)continue;if($files['error'][$i]!==UPLOAD_ERR_OK)throw new Exception('Có file ảnh upload không thành công.');if($files['size'][$i]>2*1024*1024)throw new Exception('Mỗi file ảnh không được vượt quá 2 MB.');$mime=$finfo->file($files['tmp_name'][$i]);if(!isset($map[$mime]))throw new Exception('Chỉ cho phép file JPG, PNG hoặc WebP.');$existingFile=findProductImageByHash($files['tmp_name'][$i],$imageDirectory);$preparedImages[]=['tmp_name'=>$files['tmp_name'][$i],'file_name'=>$existingFile??('product-'.bin2hex(random_bytes(8)).'.'.$map[$mime]),'is_new'=>$existingFile===null];}}
+        if(count($preparedImages)<1)throw new Exception('Vui lòng chọn ít nhất một ảnh từ thư viện hoặc upload ảnh mới.'); if(count($preparedImages)>4)throw new Exception('Chỉ được chọn tối đa 4 ảnh.');
+        $conn->begin_transaction(); $codeResult=$conn->query("SELECT COALESCE(MAX(CAST(SUBSTRING(ProductCode, 3) AS UNSIGNED)), 0) AS LastNumber FROM products WHERE ProductCode REGEXP '^SP[0-9]+$'"); $productCode='SP'.str_pad((int)$codeResult->fetch_assoc()['LastNumber']+1,3,'0',STR_PAD_LEFT);$codeResult->free();
+        $stmt=$conn->prepare("INSERT INTO products (ProductCode, ProductName, Description, Unit, Price, StockQuantity, IsActive, SupplierID, CategoryID) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");$stmt->bind_param('ssssdiiii',$productCode,$productName,$description,$unit,$price,$stockQuantity,$isActive,$supplierID,$categoryID);$stmt->execute();$productID=$conn->insert_id;$stmt->close();
+        $stmtImage=$conn->prepare("INSERT INTO product_images (ProductID, ImageFile, AltText, IsPrimary, SortOrder) VALUES (?, ?, ?, ?, ?)"); foreach($preparedImages as $index=>$image){if($image['is_new']){$destination=$imageDirectory.'/'.$image['file_name'];if(!move_uploaded_file($image['tmp_name'],$destination))throw new Exception('Không thể lưu một trong các file ảnh.');$movedFiles[]=$destination;}$imageFile=$image['file_name'];$altText=$productName.($index===0?' - ảnh chính':' - ảnh '.($index+1));$primary=$index===0?1:0;$sort=$index+1;$stmtImage->bind_param('issii',$productID,$imageFile,$altText,$primary,$sort);$stmtImage->execute();}$stmtImage->close();$conn->commit();header('Location: /admin/products/');exit;
+    } catch(Throwable $e) {try{$conn->rollback();}catch(Throwable $ignored){}foreach($movedFiles as $file)if(is_file($file))unlink($file);$error=$e->getMessage();}
 }
-
-require_once '/var/www/src/includes/admin/header.php';
-require_once '/var/www/src/includes/admin/navbar.php';
+require_once '/var/www/src/includes/admin/header.php'; require_once '/var/www/src/includes/admin/navbar.php';
 ?>
-
-<div class="container mt-4">
-    <h2 class="mb-4">Thêm sản phẩm</h2>
-
-    <?php if ($error !== ''): ?>
-        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
-    <?php endif; ?>
-
-    <form method="post" enctype="multipart/form-data">
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="productCode" class="form-label">Mã sản phẩm</label>
-                <input type="text" class="form-control" id="productCode" name="product_code" value="<?= htmlspecialchars($nextProductCode) ?>" readonly>
-                <div class="form-text">Mã được tự động tạo khi lưu sản phẩm.</div>
-            </div>
-            <div class="col-md-8 mb-3">
-                <label for="productName" class="form-label">Tên sản phẩm</label>
-                <input type="text" class="form-control" id="productName" name="product_name" value="<?= htmlspecialchars($_POST['product_name'] ?? '') ?>" required>
-            </div>
-        </div>
-
-        <div class="mb-3">
-            <label for="description" class="form-label">Mô tả</label>
-            <textarea class="form-control" id="description" name="description" rows="3"><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
-        </div>
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="unit" class="form-label">Đơn vị tính</label>
-                <select class="form-select" id="unit" name="unit">
-                    <option value="">-- Chọn đơn vị --</option>
-                    <?php foreach ($unitOptions as $unitOption): ?>
-                        <option value="<?= htmlspecialchars($unitOption) ?>" <?= ($_POST['unit'] ?? '') === $unitOption ? 'selected' : '' ?>><?= htmlspecialchars($unitOption) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="price" class="form-label">Giá</label>
-                <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" value="<?= htmlspecialchars($_POST['price'] ?? '0') ?>" required>
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="stockQuantity" class="form-label">Tồn kho</label>
-                <input type="number" class="form-control" id="stockQuantity" name="stock_quantity" min="0" value="<?= htmlspecialchars($_POST['stock_quantity'] ?? '0') ?>" required>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="categoryID" class="form-label">Danh mục</label>
-                <select class="form-select" id="categoryID" name="category_id" required>
-                    <option value="">-- Chọn danh mục --</option>
-                    <?php while ($category = $categories->fetch_assoc()): ?>
-                        <option value="<?= $category['CategoryID'] ?>" <?= (($_POST['category_id'] ?? '') == $category['CategoryID']) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($category['CategoryName']) ?>
-                        </option>
-                    <?php endwhile; ?>
-                </select>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="supplierID" class="form-label">Nhà cung cấp</label>
-                <select class="form-select" id="supplierID" name="supplier_id" required>
-                    <option value="">-- Chọn nhà cung cấp --</option>
-                    <?php while ($supplier = $suppliers->fetch_assoc()): ?>
-                        <option value="<?= $supplier['SupplierID'] ?>" <?= (($_POST['supplier_id'] ?? '') == $supplier['SupplierID']) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($supplier['SupplierName']) ?>
-                        </option>
-                    <?php endwhile; ?>
-                </select>
-            </div>
-        </div>
-
-        <div class="mb-3">
-            <label for="productImages" class="form-label">Hình ảnh sản phẩm</label>
-            <input type="file" class="form-control" id="productImages" name="product_images[]" accept="image/jpeg,image/png,image/webp" multiple required>
-            <div class="form-text">
-                Chọn từ 1 đến 4 ảnh. Chấp nhận JPG, PNG hoặc WebP. Mỗi ảnh tối đa 2 MB. Ảnh đầu tiên là ảnh chính.
-            </div>
-        </div>
-
-        <div class="form-check mb-3">
-            <input type="checkbox" class="form-check-input" id="isActive" name="is_active" value="1" <?= (isset($_POST['is_active']) || $_SERVER['REQUEST_METHOD'] !== 'POST') ? 'checked' : '' ?>>
-            <label class="form-check-label" for="isActive">Đang kinh doanh</label>
-        </div>
-
-        <button type="submit" class="btn btn-primary">Lưu</button>
-        <a href="/admin/products/" class="btn btn-secondary">Hủy</a>
-    </form>
-</div>
-
-<?php
-require_once '/var/www/src/includes/admin/footer.php';
-$conn->close();
-?>
+<div class="container mt-4"><h2 class="mb-4">Thêm sản phẩm</h2><?php if($error!==''):?><div class="alert alert-danger"><?=htmlspecialchars($error)?></div><?php endif;?>
+<form method="post" enctype="multipart/form-data"><div class="row"><div class="col-md-4 mb-3"><label for="productCode" class="form-label">Mã sản phẩm</label><input type="text" class="form-control" id="productCode" name="product_code" value="<?=htmlspecialchars($nextProductCode)?>" readonly><div class="form-text">Mã được tự động tạo khi lưu sản phẩm.</div></div><div class="col-md-8 mb-3"><label for="productName" class="form-label">Tên sản phẩm</label><input type="text" class="form-control" id="productName" name="product_name" value="<?=htmlspecialchars($_POST['product_name']??'')?>" required></div></div>
+<div class="mb-3"><label for="description" class="form-label">Mô tả</label><textarea class="form-control" id="description" name="description" rows="3"><?=htmlspecialchars($_POST['description']??'')?></textarea></div><div class="row"><div class="col-md-4 mb-3"><label for="unit" class="form-label">Đơn vị tính</label><select class="form-select" id="unit" name="unit"><option value="">-- Chọn đơn vị --</option><?php foreach($unitOptions as $option):?><option value="<?=htmlspecialchars($option)?>" <?=($_POST['unit']??'')===$option?'selected':''?>><?=htmlspecialchars($option)?></option><?php endforeach;?></select></div><div class="col-md-4 mb-3"><label for="price" class="form-label">Giá</label><input type="number" class="form-control" id="price" name="price" min="0" step="0.01" value="<?=htmlspecialchars($_POST['price']??'0')?>" required></div><div class="col-md-4 mb-3"><label for="stockQuantity" class="form-label">Tồn kho</label><input type="number" class="form-control" id="stockQuantity" name="stock_quantity" min="0" value="<?=htmlspecialchars($_POST['stock_quantity']??'0')?>" required></div></div>
+<div class="row"><div class="col-md-6 mb-3"><label for="categoryID" class="form-label">Danh mục</label><select class="form-select" id="categoryID" name="category_id" required><option value="">-- Chọn danh mục --</option><?php while($category=$categories->fetch_assoc()):?><option value="<?=$category['CategoryID']?>" <?=($_POST['category_id']??'')==$category['CategoryID']?'selected':''?>><?=htmlspecialchars($category['CategoryName'])?></option><?php endwhile;?></select></div><div class="col-md-6 mb-3"><label for="supplierID" class="form-label">Nhà cung cấp</label><select class="form-select" id="supplierID" name="supplier_id" required><option value="">-- Chọn nhà cung cấp --</option><?php while($supplier=$suppliers->fetch_assoc()):?><option value="<?=$supplier['SupplierID']?>" <?=($_POST['supplier_id']??'')==$supplier['SupplierID']?'selected':''?>><?=htmlspecialchars($supplier['SupplierName'])?></option><?php endwhile;?></select></div></div>
+<div class="mb-3"><label for="productImages" class="form-label">Hình ảnh sản phẩm</label><input type="file" class="form-control" id="productImages" name="product_images[]" accept="image/jpeg,image/png,image/webp" multiple><div class="form-text">Có thể chọn ảnh mới hoặc ảnh đã lưu, tối đa 4 ảnh. Ảnh đầu tiên là ảnh chính.</div></div><div class="mb-4"><div class="d-flex justify-content-between align-items-center mb-2"><label class="form-label mb-0">Hoặc chọn từ ảnh đã lưu</label><input type="search" class="form-control form-control-sm w-auto" id="librarySearch" placeholder="Tìm ảnh..."></div><div class="row g-2" id="imageLibrary"><?php foreach($libraryImages as $image):?><div class="col-6 col-md-3 library-image-item" data-image-name="<?=htmlspecialchars(strtolower($image))?>"><label class="library-image-card d-block position-relative"><input type="checkbox" class="form-check-input position-absolute top-0 end-0 m-2" name="existing_images[]" value="<?=htmlspecialchars($image)?>"><img class="img-fluid rounded w-100" style="height:130px;object-fit:contain;background:#f8fafc" src="/uploads/products/<?=rawurlencode($image)?>" alt="<?=htmlspecialchars($image)?>"><small class="d-block text-truncate mt-1"><?=htmlspecialchars($image)?></small></label></div><?php endforeach;?></div></div><div class="form-check mb-3"><input type="checkbox" class="form-check-input" id="isActive" name="is_active" value="1" <?=isset($_POST['is_active'])||$_SERVER['REQUEST_METHOD']!=='POST'?'checked':''?>><label class="form-check-label" for="isActive">Đang kinh doanh</label></div><button type="submit" class="btn btn-primary">Lưu</button> <a href="/admin/products/" class="btn btn-secondary">Hủy</a></form></div>
+<script>document.getElementById('librarySearch')?.addEventListener('input',function(){const q=this.value.toLowerCase();document.querySelectorAll('.library-image-item').forEach(item=>item.classList.toggle('d-none',!item.dataset.imageName.includes(q)));});document.querySelectorAll('.library-image-card input').forEach(input=>input.addEventListener('change',()=>input.closest('.library-image-card').classList.toggle('border-primary',input.checked)));</script><?php require_once '/var/www/src/includes/admin/footer.php';$conn->close();?>

@@ -1,6 +1,7 @@
 <?php
 $pageTitle = 'Sửa sản phẩm';
 require_once '/var/www/src/config/database.php';
+require_once '/var/www/src/includes/admin/product-images.php';
 
 $productID = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if ($productID <= 0) {
@@ -20,6 +21,8 @@ if (!$product) {
 }
 
 $error = '';
+$imageDirectory = productImageDirectory();
+$libraryImages = listProductLibraryImages($imageDirectory);
 $unitOptions = ['Chiếc', 'Cái', 'Bộ', 'Hộp', 'Gói', 'Cặp', 'Thùng', 'Mét', 'Kg'];
 $currentUnit = $product['Unit'] ?? '';
 if ($currentUnit !== '' && !in_array($currentUnit, $unitOptions, true)) {
@@ -124,7 +127,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $conn->commit();
 
             $filePath = '/var/www/html/uploads/products/' . $imageToDelete['ImageFile'];
-            if (file_exists($filePath)) {
+            $stmtReferences = $conn->prepare("SELECT COUNT(*) AS ReferenceCount FROM product_images WHERE ImageFile = ?");
+            $stmtReferences->bind_param('s', $imageToDelete['ImageFile']);
+            $stmtReferences->execute();
+            $referenceCount = (int) $stmtReferences->get_result()->fetch_assoc()['ReferenceCount'];
+            $stmtReferences->close();
+            if ($referenceCount === 0 && is_file($filePath)) {
                 unlink($filePath);
             }
 
@@ -139,10 +147,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 2. Nhánh Thêm ảnh
     elseif (isset($_POST['add_images'])) {
+        $libraryImagesToAdd = [];
+        $currentImageNames = [];
+        $validImages = [];
+        try {
+            $selectedExisting = validateExistingProductImages($_POST['existing_images'] ?? [], $imageDirectory);
+            $stmtCurrentImages = $conn->prepare("SELECT ImageFile FROM product_images WHERE ProductID = ?");
+            $stmtCurrentImages->bind_param('i', $productID);
+            $stmtCurrentImages->execute();
+            $currentImageResult = $stmtCurrentImages->get_result();
+            while ($currentImage = $currentImageResult->fetch_assoc()) $currentImageNames[] = $currentImage['ImageFile'];
+            $stmtCurrentImages->close();
+            $libraryImagesToAdd = array_values(array_diff($selectedExisting, $currentImageNames));
+            if (count($currentImageNames) + count($libraryImagesToAdd) > 4) throw new Exception('Sản phẩm chỉ được có tối đa 4 ảnh.');
+        } catch (Throwable $e) { $error = $e->getMessage(); }
         $files = $_FILES['product_images'] ?? null;
 
-        if (!$files || !isset($files['name']) || !is_array($files['name'])) {
+        if ((!$files || !isset($files['name']) || !is_array($files['name'])) && count($libraryImagesToAdd) === 0) {
             $error = 'Vui lòng chọn ít nhất một ảnh.';
+        } elseif (!$files || !isset($files['name']) || !is_array($files['name'])) {
+            $files = ['name' => [], 'error' => [], 'size' => [], 'tmp_name' => []];
         } else {
             $maxSize = 2 * 1024 * 1024;
             $extensionMap = [
@@ -175,17 +199,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $extension = $extensionMap[$mimeType];
-                $fileName = 'product-' . bin2hex(random_bytes(8)) . '.' . $extension;
+                $existingFileName = findProductImageByHash($files['tmp_name'][$i], $imageDirectory);
+                $fileName = $existingFileName ?? ('product-' . bin2hex(random_bytes(8)) . '.' . $extension);
 
                 $validImages[] = [
                     'tmp_name'  => $files['tmp_name'][$i],
-                    'file_name' => $fileName
+                    'file_name' => $fileName,
+                    'is_new'    => $existingFileName === null
                 ];
             }
 
-            if (!$error && count($validImages) === 0) {
+            if (!$error && count($validImages) === 0 && count($libraryImagesToAdd) === 0) {
                 $error = 'Vui lòng chọn ít nhất một ảnh.';
             }
+        }
+
+        if (!$error && count($currentImageNames) + count($validImages) + count($libraryImagesToAdd) > 4) {
+            $error = 'Sản phẩm chỉ được có tối đa 4 ảnh.';
         }
 
         if (!$error) {
@@ -214,17 +244,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ";
                 $stmtInsertImage = $conn->prepare($sqlInsertImage);
 
+                $libraryPrimary = $imageCount === 0 ? 1 : 0;
+                foreach ($libraryImagesToAdd as $libraryIndex => $libraryFileName) {
+                    $altText = $product['ProductName'] . ($libraryPrimary === 1 ? ' - ảnh chính' : ' - ảnh thư viện');
+                    $sortOrder = $nextSortOrder + $libraryIndex;
+                    $stmtInsertImage->bind_param('issii', $productID, $libraryFileName, $altText, $libraryPrimary, $sortOrder);
+                    if (!$stmtInsertImage->execute()) throw new Exception('Không thể liên kết ảnh đã lưu.');
+                    $libraryPrimary = 0;
+                }
+                $imageCount += count($libraryImagesToAdd);
+
                 foreach ($validImages as $index => $image) {
                     $destination = '/var/www/html/uploads/products/' . $image['file_name'];
 
-                    if (!move_uploaded_file($image['tmp_name'], $destination)) {
+                    if ($image['is_new'] && !move_uploaded_file($image['tmp_name'], $destination)) {
                         throw new Exception('Không thể lưu một trong các ảnh.');
                     }
 
-                    $movedFiles[] = $destination;
+                    if ($image['is_new']) $movedFiles[] = $destination;
 
                     $isPrimary = ($imageCount === 0 && $index === 0) ? 1 : 0;
-                    $sortOrder = $nextSortOrder + $index;
+                    $sortOrder = $nextSortOrder + count($libraryImagesToAdd) + $index;
 
                     $altText = $product['ProductName'] . ($isPrimary === 1 ? ' - ảnh chính' : ' - ảnh ' . $sortOrder);
 
@@ -327,6 +367,10 @@ $stmtImages = $conn->prepare($sqlImages);
 $stmtImages->bind_param('i', $productID);
 $stmtImages->execute();
 $productImages = $stmtImages->get_result();
+$productImageRows = [];
+while ($imageRow = $productImages->fetch_assoc()) {
+    $productImageRows[] = $imageRow;
+}
 
 require_once '/var/www/src/includes/admin/header.php';
 require_once '/var/www/src/includes/admin/navbar.php';
@@ -424,7 +468,7 @@ require_once '/var/www/src/includes/admin/navbar.php';
         <h4 class="mb-3">Hình ảnh sản phẩm</h4>
 
         <div class="row">
-            <?php while ($image = $productImages->fetch_assoc()): ?>
+            <?php foreach ($productImageRows as $image): ?>
                 <div class="col-md-3 mb-3">
                     <div class="card h-100">
                         <img src="/uploads/products/<?= htmlspecialchars($image['ImageFile']) ?>" class="card-img-top" alt="<?= htmlspecialchars($image['AltText'] ?? '') ?>">
@@ -445,12 +489,21 @@ require_once '/var/www/src/includes/admin/navbar.php';
                         </div>
                     </div>
                 </div>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         </div>
 
         <div class="mb-3 mt-3">
             <label for="productImages" class="form-label">Thêm hình ảnh</label>
             <input type="file" class="form-control" id="productImages" name="product_images[]" accept="image/jpeg,image/png,image/webp" multiple>
+            <div class="mt-3 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2"><label class="form-label mb-0">Hoặc chọn từ ảnh đã lưu</label><input type="search" class="form-control form-control-sm w-auto" id="librarySearch" placeholder="Tìm ảnh..."></div>
+                <div class="row g-2" id="imageLibrary">
+                    <?php foreach ($libraryImages as $libraryImage): ?>
+                        <?php $isAttached = in_array($libraryImage, array_column($productImageRows, 'ImageFile'), true); ?>
+                        <div class="col-6 col-md-3 library-image-item" data-image-name="<?= htmlspecialchars(strtolower($libraryImage)) ?>"><label class="library-image-card d-block position-relative <?= $isAttached ? 'border border-primary rounded' : '' ?>"><input type="checkbox" class="form-check-input position-absolute top-0 end-0 m-2" name="existing_images[]" value="<?= htmlspecialchars($libraryImage) ?>" <?= $isAttached ? 'checked' : '' ?>><img class="img-fluid rounded w-100" style="height:130px;object-fit:contain;background:#f8fafc" src="/uploads/products/<?= rawurlencode($libraryImage) ?>" alt="<?= htmlspecialchars($libraryImage) ?>"><small class="d-block text-truncate mt-1 px-1"><?= htmlspecialchars($libraryImage) ?></small></label></div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
             <div class="form-text">Chấp nhận JPG, PNG hoặc WebP. Mỗi ảnh tối đa 2 MB.</div>
         </div>
 
@@ -462,6 +515,11 @@ require_once '/var/www/src/includes/admin/navbar.php';
         <a href="/admin/products/" class="btn btn-secondary">Hủy</a>
     </form>
 </div>
+
+<script>
+document.getElementById('librarySearch')?.addEventListener('input', function () { const query = this.value.toLowerCase(); document.querySelectorAll('.library-image-item').forEach(item => item.classList.toggle('d-none', !item.dataset.imageName.includes(query))); });
+document.querySelectorAll('.library-image-card input').forEach(input => input.addEventListener('change', () => input.closest('.library-image-card').classList.toggle('border-primary', input.checked)));
+</script>
 
 <?php
 require_once '/var/www/src/includes/admin/footer.php';
