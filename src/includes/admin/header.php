@@ -373,6 +373,12 @@
         .table thead.table-dark th { background: #172554; border-color: rgba(255,255,255,.12); font-size: .78rem; letter-spacing: .02em; text-transform: uppercase; }
         .table tbody td { font-size: .86rem; }
         .badge { padding: .48em .7em; border-radius: 7px; font-weight: 700; }
+        .library-image-card { padding: 6px; border: 1px solid var(--admin-border); border-radius: 12px; cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+        .library-image-card:hover { border-color: #93c5fd; box-shadow: 0 6px 18px rgba(37,99,235,.12); transform: translateY(-2px); }
+        .library-image-card.border-primary { box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
+        /* Ảnh sản phẩm tiếp tục được chọn bằng upload trực tiếp trong form. */
+        .admin-navbar ~ .container #imageLibrary,
+        .admin-navbar ~ .container .mb-4:has(#imageLibrary) { display: none !important; }
         .admin-footer { color: #94a3b8; background: #0f172a; border-top: 0; }
         @media (max-width: 767.98px) {
             .admin-navbar .nav-link { padding: 10px 12px; }
