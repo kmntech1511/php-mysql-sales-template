@@ -125,7 +125,7 @@ require_once '/var/www/src/includes/frontend/navbar.php';
                 id="keyword"
                 class="form-control"
                 value="<?= htmlspecialchars($keyword) ?>"
-                placeholder="Nhập tên hoặc mã sản phẩm"
+                placeholder="Nhập tên sản phẩm cầm tìm"
             >
         </div>
 
